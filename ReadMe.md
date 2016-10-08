@@ -36,7 +36,17 @@ class Example {
     {
         HashTags::getInstance()->remove($this->entry_id);   
     }
-
+    
+    public function getHashtagsByEntryId()
+    {
+    	return HashTags::getInstance()->getHashtagsByEntryId($this->entry_id);
+    }
+   
+    public function getEntriesByHashtag($hashtag)
+    {
+    	return HashTags::getInstance()->getEntriesByHashtag($hashtag);
+    }
+    
 }
 
 ```
