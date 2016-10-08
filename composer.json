@@ -14,6 +14,6 @@
     "predis/predis": "^1.1"
   },
   "autoload": {
-    "psr-4": { "hashtags\\": "src/" }
+    "psr-4": { "libhashtags": "src/" }
   }
 }
