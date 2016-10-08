@@ -55,7 +55,7 @@ class HashTags {
             $storage_entry_key = $this->getStorageEntryKey($entry_id);
 
             /** @var array $current_hashtags - получаем ранее сохраненные хэштеги дял записи */
-            $current_hashtags = $this->get($entry_id, $storage_entry_key);
+            $current_hashtags = $this->getHashtagsByEntryId($entry_id, $storage_entry_key);
 
             /** @var array $new_hashtags - сравниваем ранее сохраненные хэштеги с новыми и находим какие требуется добавить */
             $new_hashtags = array_diff($hashtags, $current_hashtags);
