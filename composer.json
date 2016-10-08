@@ -3,6 +3,7 @@
   "description": "Работа с хэштегами: поиск в тексте, сохранение, получение записей по тегам",
   "keywords": ["hashtags"],
   "license": "MIT",
+  "version": "1.0.0",
   "authors": [
     {
       "name": "Pavel Zotikov",
