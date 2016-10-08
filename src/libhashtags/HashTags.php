@@ -1,5 +1,7 @@
 <?php
 
+namespace libhashtags;
+
 class HashTags {
 
     /** @var Predis\Client $this->redis */
