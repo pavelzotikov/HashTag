@@ -2,9 +2,11 @@
 
 namespace libhashtags;
 
+use Exception;
+
 class HashTags {
 
-    /** @var Predis\Client $this->redis */
+    /** @var \Predis\Client $this->redis */
     private $redis;
 
     /** @var HashTags $this->_instance */
@@ -29,7 +31,7 @@ class HashTags {
     {
         if (self::$_instance === null) {
             self::$_instance = new self();
-            self::$_instance->redis = new Predis\Client();
+            self::$_instance->redis = new \Predis\Client();
         }
 
         return self::$_instance;
