@@ -16,5 +16,6 @@
   },
   "autoload": {
     "psr-4": { "HashTags\\": "src/" }
-  }
+  },
+  "minimum-stability": "dev"
 }
