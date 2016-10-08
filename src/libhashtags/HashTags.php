@@ -38,6 +38,15 @@ class HashTags {
     }
 
     /**
+     * @param int $entry_id - id записи
+     * @return bool - return $this->save()
+     */
+    public function remove($entry_id)
+    {
+        return $this->save($entry_id, "");
+    }
+
+    /**
      * @param $entry_id - id записи
      * @param $text - текст в котором будут искаться хэштеги
      * @return bool - true: сохранение прошлом успешно | false: возникли проблемы при сохранении хэштегов,
@@ -47,7 +56,7 @@ class HashTags {
     {
 
         /** @var array $hashtags - нахолим все хэштеги в тексте */
-        $hashtags = $this->parse($text);
+        $hashtags = $this->parse($text, "");
 
         try {
 
