@@ -16,13 +16,19 @@ class HashTags {
     private $_errors = array();
 
     /** @var string Паттерн для парсинга хэштегов в тексте */
-    private $_parse_pattern = '/(?:[^\w]?|^|\s)(#\w+(?!(?>[^<]*(?:<(?!\/?a\b)[^<]*)*)<\/a>))/ui';
+    private $_parse_pattern = '/(?:[^\w]?|^|\s)(?:#(\w+)(?!(?>[^<]*(?:<(?!\/?a\b)[^<]*)*)<\/a>))/ui';
+
+    /** @var string Паттерн филтрации написания хэштега */
+    public $_filter_pattern = '/[^a-zA-Z\p{Cyrillic}0-9_]/ui';
 
     /** @var string Ключ хранилища в формате функции sprintf. Хранит какие хэштеги указаны в записи */
-    private $_storage_entry_key_format = 'hashtags:entry:%d';
+    private $_storage_entry_key_format = 'hashtags:entry:%s';
 
     /** @var string Ключ хранилища в формате функции sprintf. Хранит в каких записях указан хэштег */
     private $_storage_hashtag_key_format = 'hashtag:%s';
+
+    /** @var string Ключ хранилища в формате функции sprintf. Хранит в скольки записях используется хэжштег */
+    private $_storage_inc_hashtag_key_format = 'inc:hashtag';
 
     /**
      * Singleton метод для создания одного экземпляра класса с подключенными дополнительными параметрами
@@ -56,7 +62,7 @@ class HashTags {
     {
 
         /** @var array $hashtags - нахолим все хэштеги в тексте */
-        $hashtags = $this->parse($text, "");
+        $hashtags = array_map('self::getFilteredHashtag', $this->parse($text, ""));
 
         try {
 
@@ -81,6 +87,12 @@ class HashTags {
                 /** Добавляем запись к хэштегу */
                 $this->redis->sadd($storage_hashtag_key, $entry_id);
 
+                /** @var string $storage_inc_hashtag_key - получаем ключ хранилища для хранения количества записей по хэштегу */
+                $storage_inc_hashtag_key = $this->getStorageIncHashtagKey();
+
+                /** Увеличиваем значение для хэштега */
+                $this->redis->zincrby($storage_inc_hashtag_key, 1, $new_hashtag);
+
             }
 
             /** @var array $removed_hashtags - сравниваем ранее сохраненные хэштеги с новыми и находим какие требуется удалить */
@@ -97,6 +109,12 @@ class HashTags {
 
                 /** Удаляем id записи из хёштега */
                 $this->redis->srem($storage_hashtag_key, $entry_id);
+
+                /** @var string $storage_inc_hashtag_key - получаем ключ хранилища для хранения количества записей по хэштегу */
+                $storage_inc_hashtag_key = $this->getStorageIncHashtagKey();
+
+                /** Уменьшаем значение для хэштега */
+                $this->redis->zincrby($storage_inc_hashtag_key, -1, $removed_hashtag);
 
             }
 
@@ -141,6 +159,11 @@ class HashTags {
         return $this->redis->smembers($storage_hashtag_key) ?: array();
     }
 
+    public function getHashtagsByScore()
+    {
+        return $this->redis->zrange($this->getStorageIncHashtagKey(), 0, -1, ['withscores' => true]);
+    }
+
     /**
      * Функция извлекает хэштеги из текста
      * @param string $text - текст в котором будет искать хэштеги
@@ -154,7 +177,7 @@ class HashTags {
         if (preg_match_all($this->_parse_pattern, $text, $matches)) {
 
             /** @var array $hashtags - пробегаемся по хэштегам и приводим к нижнему регистру плюс убираем дублирующие */
-            $hashtags = array_unique(array_map('mb_strtolower', $matches[1]));
+            $hashtags = array_unique(array_map('self::getFilteredHashtag', $matches[1]));
 
         }
 
@@ -179,6 +202,25 @@ class HashTags {
     private function getStorageHashtagKey($hashtag)
     {
         return sprintf($this->_storage_hashtag_key_format, $hashtag);
+    }
+
+    /**
+     * Функция формируем ключ для хранилища
+     * @return string - возвращает ключ для хранилища
+     */
+    private function getStorageIncHashtagKey()
+    {
+        return sprintf($this->_storage_inc_hashtag_key_format);
+    }
+
+    /**
+     * Функция очищает хэштег от лишнего
+     * @param string $hashtag - имя хэштега
+     * @return string - возвращает очищенный хэштег
+     */
+    private function getFilteredHashtag(string $hashtag): string
+    {
+        return mb_strtolower(preg_replace($this->_filter_pattern, '', $hashtag));
     }
 
     /**
